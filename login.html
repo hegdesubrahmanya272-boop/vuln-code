@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scanner Control Gateway</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1d20; color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #24282c; border: 1px solid #343a40; border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        h2 { margin: 0 0 1.5rem 0; font-size: 1.5rem; letter-spacing: -0.5px; text-align: center; color: #ffffff; }
+        label { font-size: 0.85rem; color: #a0aec0; font-weight: 500; }
+        input { width: 100%; padding: 0.75rem; background: #1a1d20; border: 1px solid #495057; border-radius: 6px; color: #fff; margin: 0.4rem 0 1.2rem 0; box-sizing: border-box; font-size: 0.95rem; }
+        input:focus { border-color: #0d6efd; outline: none; }
+        button { width: 100%; padding: 0.8rem; background: #0d6efd; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+        button:hover { background: #0b5ed7; }
+        .error-banner { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #ea868f; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1.2rem; text-align: center; }
+        p { text-align: center; font-size: 0.85rem; color: #a0aec0; margin-top: 1.5rem; }
+        a { color: #0d6efd; text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Login</h2>
+        {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+        <form method="POST">
+            <label>Username</label>
+            <input type="text" name="username" required autocomplete="off">
+            <label>Access Password</label>
+            <input type="password" name="password" required>
+            <button type="submit">Authenticate</button>
+        </form>
+        <p>New workspace initialization? <a href="/register">Register Node</a></p>
+    </div>
+</body>
+</html>

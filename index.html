@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workspace Console</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #121416; color: #e9ecef; margin: 0; padding: 0; }
+        
+        header { background-color: #1a1d20; border-bottom: 1px solid #2d3238; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.15rem; margin: 0; font-weight: 600; color: #ffffff; display: flex; align-items: center; gap: 8px; }
+        header h1::before { content: ''; display: inline-block; width: 10px; height: 10px; background: #00e676; border-radius: 50%; box-shadow: 0 0 8px #00e676; }
+        
+        .nav-links a { color: #dc3545; text-decoration: none; font-size: 0.9rem; border: 1px solid #dc3545; padding: 0.4rem 0.8rem; border-radius: 4px; transition: all 0.2s; }
+        .nav-links a:hover { background: #dc3545; color: white; }
+
+        .container { max-width: 1100px; margin: 2.5rem auto; padding: 0 1.5rem; }
+        
+        .control-panel { background: #1a1d20; border: 1px solid #2d3238; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .control-panel h3 { margin-top: 0; margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #adb5bd; }
+        
+        .input-group { display: flex; gap: 0.75rem; }
+        input[type="text"], input[type="password"] { flex: 1; padding: 0.8rem 1rem; background-color: #121416; border: 1px solid #343a40; border-radius: 6px; color: #fff; font-size: 0.95rem; font-family: monospace; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #0d6efd; outline: none; }
+        
+        button { padding: 0.8rem 1.75rem; background-color: #0d6efd; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: background 0.2s; }
+        button:hover { background-color: #0b5ed7; }
+
+        .login-status-alert { margin-bottom: 1.5rem; padding: 1rem; border-radius: 8px; font-weight: 600; display: none; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #2d3238; }
+
+        /* Dashboard Grid Layout (Displays the lists side-by-side at the top) */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+        .summary-panel { background: #1a1d20; border: 1px solid #2d3238; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 1.5rem; }
+        .summary-panel.no-margin { margin-bottom: 0; }
+        .summary-panel h3 { margin-top: 0; margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #adb5bd; }
+        .summary-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; text-align: left; }
+        .summary-table th { background-color: #212529; color: #adb5bd; padding: 0.75rem; border-bottom: 2px solid #343a40; }
+        .summary-table td { padding: 0.75rem; border-bottom: 1px solid #2d3238; }
+        
+        .links-log-box { background-color: #0f1112; border: 1px solid #2d3238; border-radius: 6px; padding: 1rem; height: 180px; overflow-y: auto; font-family: 'SFMono-Regular', monospace; font-size: 0.85rem; line-height: 1.7; }
+        .link-row { border-bottom: 1px dashed #212529; padding: 4px 0; display: flex; gap: 10px; }
+        .link-num { color: #6c757d; font-weight: bold; min-width: 30px; }
+
+        .console-wrapper { background: #1a1d20; border: 1px solid #2d3238; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 1.5rem; }
+        .console-header { background: #212529; padding: 0.75rem 1.25rem; border-bottom: 1px solid #2d3238; font-size: 0.85rem; color: #adb5bd; display: flex; justify-content: space-between; }
+        
+        .console-body { background-color: #0f1112; padding: 1.5rem; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: 0.9rem; height: 320px; overflow-y: auto; white-space: pre-wrap; line-height: 1.7; color: #d8dee9; }
+        
+        .line-info { color: #8892b0; }
+        .line-port { color: #e0af68; font-weight: bold; }
+        .line-crawl { color: #7aa2f7; font-weight: 500; }
+        .line-safe { color: #9ece6a; }
+        .line-vuln { color: #f7768e; background: rgba(247, 118, 142, 0.08); padding: 4px 8px; border-radius: 4px; display: inline-block; width: 100%; box-sizing: border-box; border-left: 3px solid #f7768e; margin: 2px 0; }
+
+        /* OWASP Status Badges Styling Rules */
+        .vector-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; background-color: #212529; color: #8892b0; border: 1px solid #343a40; text-transform: uppercase; }
+        .status-idle { color: #8892b0; background-color: rgba(136, 146, 176, 0.05); }
+        .status-active { color: #7aa2f7; background-color: rgba(122, 162, 247, 0.1); border-color: #7aa2f7; box-shadow: 0 0 6px rgba(122, 162, 247, 0.2); }
+        .status-triggered { color: #f7768e; background-color: rgba(247, 118, 142, 0.12); border-color: #f7768e; box-shadow: 0 0 8px rgba(247, 118, 142, 0.3); }
+        .status-pass { color: #9ece6a; background-color: rgba(158, 206, 106, 0.1); border-color: #9ece6a; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>vulnerability scanner</h1>
+        <div class="nav-links">
+            <span style="margin-right: 15px; color: #adb5bd;">User: <strong style="color: #fff;">{{ username }}</strong></span>
+            <a href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- TOP PANEL: Target Inputs -->
+        <div class="control-panel">
+            <h3>Target</h3>
+            <div class="input-group">
+                <input type="text" id="targetUrl" placeholder="Provide target base URL context (e.g., http://localhost:5000)">
+                <input type="text" id="targetUsername" placeholder="Username (Optional)">
+                <input type="password" id="targetPassword" placeholder="Password (Optional)">
+                <button onclick="executeLiveStreamScan()">scan</button>
+            </div>
+        </div>
+
+        <!-- Middle Alert Banner for Authentication State -->
+        <div id="loginStatusMessage" class="login-status-alert"></div>
+
+        <!-- REARRANGED: BOTH DASHBOARD BOXES LINKED SIDE-BY-SIDE ON TOP -->
+        <div class="dashboard-grid">
+            <!-- Crawled Links Registry Panel -->
+            <div class="summary-panel no-margin">
+                <h3>Crawled Links Registry</h3>
+                <div id="crawlCountSummary" style="font-weight: 600; color: #7aa2f7; margin-bottom: 0.75rem; font-size: 0.95rem;">Total crawled links: 0 links found</div>
+                <div id="crawlLinksContainer" class="links-log-box">
+                    <span style="color: #6c757d;">Awaiting crawl infrastructure activation parameters...</span>
+                </div>
+            </div>
+
+            <!-- File Hunting Matrix Panel -->
+            <div class="summary-panel no-margin">
+                <h3>File Hunting Matrix</h3>
+                <div id="fileSummaryText" style="font-weight: 600; color: #e0af68; margin-bottom: 0.75rem; font-size: 0.95rem;">Total open files discovered: 0 files found</div>
+                <div id="fileHuntingContainer" class="links-log-box" style="border-color: #343a40;">
+                    <span style="color: #6c757d;">Awaiting endpoint validation queues...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN PANEL: Terminal Logging Box -->
+        <div class="console-wrapper">
+            <div class="console-header">
+                <span>Scanning results</span>
+                <span id="statusIndicator" style="color: #6c757d;">Idle</span>
+            </div>
+            <div id="consoleDisplay" class="console-body">Awaiting pipeline vector input parameters...</div>
+        </div>
+
+        <!-- OWASP RISK MAPPING DASHBOARD -->
+        <div class="summary-panel">
+            <h3>OWASP Risk Mapping Matrix</h3>
+            <table class="summary-table" style="margin-top: 0.5rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Tool Feature</th>
+                        <th style="width: 35%;">Security Operation Vector</th>
+                        <th style="width: 25%;">Related OWASP Category</th>
+                        <th style="width: 15%; text-align: center;">Live Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600; color: #ffffff;">File Hunting Matrix</td>
+                        <td style="color: #adb5bd;">Audits folder paths for left-behind structural exposures (.env, .git)</td>
+                        <td><span style="color: #e0af68;">A05:2021 - Misconfiguration</span></td>
+                        <td style="text-align: center;"><span id="v-filematrix" class="vector-badge status-idle">Idle</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #ffffff;">Link Vulnerability Check</td>
+                        <td style="color: #adb5bd;">Verifies missing security controls (HTTPS, CSP, Clickjacking headers)</td>
+                        <td><span style="color: #e0af68;">A05:2021 - Misconfiguration</span></td>
+                        <td style="text-align: center;"><span id="v-linkvuln" class="vector-badge status-idle">Idle</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #ffffff;">Authenticated Crawler</td>
+                        <td style="color: #adb5bd;">Validates backend path permissions using persistent login session state</td>
+                        <td><span style="color: #bb9af7;">A01:2021 - Access Control</span></td>
+                        <td style="text-align: center;"><span id="v-crawler" class="vector-badge status-idle">Idle</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #ffffff;">Cookie Attribute Logger</td>
+                        <td style="color: #adb5bd;">Inspects token security criteria constraints (Secure / Insecure flags)</td>
+                        <td><span style="color: #7aa2f7;">A07:2021 - Auth Failures</span></td>
+                        <td style="text-align: center;"><span id="v-cookie" class="vector-badge status-idle">Idle</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #ffffff;">Technology Identifier</td>
+                        <td style="color: #adb5bd;">Extracts deployment software stack variables and client engine strings</td>
+                        <td><span style="color: #2ac3de;">A06:2021 - Outdated Comp.</span></td>
+                        <td style="text-align: center;"><span id="v-tech" class="vector-badge status-idle">Idle</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BOTTOM PANEL: Vulnerability Findings Table -->
+        <div class="summary-panel">
+            <h3>Final Findings Report</h3>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Finding Type</th>
+                        <th style="width: 40%;">Target Resource / URL Location</th>
+                        <th style="width: 40%;">Analysis Details</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <tr>
+                        <td colspan="3" style="color: #6c757d; text-align: center; padding: 1.5rem;" id="placeholderRow">
+                            No active scan findings saved yet. Run a scan pipeline to extract data rows.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function executeLiveStreamScan() {
+            const urlInput = document.getElementById('targetUrl').value;
+            const usernameInput = document.getElementById('targetUsername').value;
+            const passwordInput = document.getElementById('targetPassword').value;
+            
+            const consoleBox = document.getElementById('consoleDisplay');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const tableBody = document.getElementById('reportTableBody');
+            
+            const loginAlertBox = document.getElementById('loginStatusMessage');
+            
+            // New UI Elements mapping
+            const crawlLinksBox = document.getElementById('crawlLinksContainer');
+            const crawlSummaryText = document.getElementById('crawlCountSummary');
+            
+            // File hunting container
+            const fileHuntingBox = document.getElementById('fileHuntingContainer');
+            const fileSummaryText = document.getElementById('fileSummaryText');
+            let discoveredFilesCount = 0;
+            
+            // OWASP Matrix UI DOM References
+            const bFileMatrix = document.getElementById('v-filematrix');
+            const bLinkVuln = document.getElementById('v-linkvuln');
+            const bCrawler = document.getElementById('v-crawler');
+            const bCookie = document.getElementById('v-cookie');
+            const bTech = document.getElementById('v-tech');
+            
+            // Track dynamic metrics sequentially starting at 0
+            let totalCrawledCount = 0;
+            
+            loginAlertBox.style.display = "none";
+            loginAlertBox.innerHTML = "";
+            
+            crawlSummaryText.innerHTML = "Total crawled links: 0 links found";
+            crawlLinksBox.innerHTML = "<span style='color: #6c757d;'>Initializing crawl mapping engine thread hooks...</span>";
+            
+            // Reset files dashboard
+            fileSummaryText.innerHTML = "Total open files discovered: 0 files found";
+            fileHuntingBox.innerHTML = "<span style='color: #6c757d;'>Awaiting active crawl target data hooks...</span>";
+            
+            // Reset OWASP Matrix badge markers to idle defaults on scan execution
+            [bFileMatrix, bLinkVuln, bCrawler, bCookie, bTech].forEach(badge => {
+                badge.className = "vector-badge status-idle";
+                badge.innerText = "Idle";
+            });
+            
+            if (!urlInput) { alert('Scope injection warning: Target URL string required.'); return; }
+
+            consoleBox.innerHTML = "<span class='line-info'>Connecting to scan subsystem thread handlers...</span>\n";
+            tableBody.innerHTML = "";
+            statusIndicator.innerHTML = "SCANNING";
+            statusIndicator.style.color = "#e0af68";
+            
+            try {
+                const streamUrl = `/stream_scan?url=${encodeURIComponent(urlInput)}&username=${encodeURIComponent(usernameInput)}&password=${encodeURIComponent(passwordInput)}`;
+                const response = await fetch(streamUrl);
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const textChunk = decoder.decode(value);
+                    const lines = textChunk.split('\n');
+                    
+                    lines.forEach(line => {
+                        if (!line.trim()) return;
+                        
+                        // Authentication alerts logic mapping
+                        if (line.includes("Login successfully")) {
+                            loginAlertBox.style.display = "block";
+                            loginAlertBox.style.backgroundColor = "rgba(158, 206, 106, 0.12)";
+                            loginAlertBox.style.color = "#9ece6a";
+                            loginAlertBox.style.borderLeft = "4px solid #9ece6a";
+                            loginAlertBox.innerHTML = "🟩 <strong>Authentication Success:</strong> Connected to target profile session.";
+                        } else if (line.includes("Unsuccessful login")) {
+                            loginAlertBox.style.display = "block";
+                            loginAlertBox.style.backgroundColor = "rgba(247, 118, 142, 0.12)";
+                            loginAlertBox.style.color = "#f7768e";
+                            loginAlertBox.style.borderLeft = "4px solid #f7768e";
+                            loginAlertBox.innerHTML = "🟥 <strong>Authentication Failed:</strong> Server rejected authentication metrics.";
+                        } else if (line.includes("No clear login forms detected")) {
+                            loginAlertBox.style.display = "block";
+                            loginAlertBox.style.backgroundColor = "rgba(224, 175, 104, 0.12)";
+                            loginAlertBox.style.color = "#e0af68";
+                            loginAlertBox.style.borderLeft = "4px solid #e0af68";
+                            loginAlertBox.innerHTML = "⚠️ <strong>Form Discovery:</strong> No active login panels found on this landing page. Operating anonymously.";
+                        }
+
+                        // EXTRACT NEW CRAWL LINKS
+                        if (line.startsWith("CRAWL:")) {
+                            totalCrawledCount++;
+                            
+                            bCrawler.className = "vector-badge status-active";
+                            bCrawler.innerText = "Active";
+                            
+                            if (totalCrawledCount === 1) {
+                                crawlLinksBox.innerHTML = "";
+                            }
+                            
+                            let extractedUrl = line.split("->")[1] ? line.split("->")[1].trim() : line.replace("CRAWL:", "").trim();
+                            
+                            let linkElementRow = `<div class="link-row">
+                                <span class="link-num">#${totalCrawledCount}</span>
+                                <span style="color: #7aa2f7; word-break: break-all;">${extractedUrl}</span>
+                            </div>`;
+                            
+                            crawlLinksBox.innerHTML += linkElementRow;
+                            crawlLinksBox.scrollTop = crawlLinksBox.scrollHeight; 
+                            
+                            crawlSummaryText.innerHTML = `Total crawled links: <strong>${totalCrawledCount}</strong> links found`;
+                        }
+                        
+                        // INTERCEPT EXPOSED FILES
+                        if (line.includes("[CONTEXT FILE EXPOSED]") || line.includes("[ROOT EXPOSURE]")) {
+                            discoveredFilesCount++;
+                            
+                            bFileMatrix.className = "vector-badge status-triggered";
+                            bFileMatrix.innerText = "Triggered";
+                            
+                            if (discoveredFilesCount === 1) {
+                                fileHuntingBox.innerHTML = "";
+                            }
+                            
+                            let rawFileUrl = line.split("->")[1] ? line.split("->")[1].trim() : line.replace("VULN:", "").trim();
+                            
+                            fileHuntingBox.innerHTML += `<div class="link-row" style="border-bottom-color: #2d3238;">
+                                <span class="link-num" style="color: #f7768e;">#${discoveredFilesCount}</span>
+                                <span style="color: #e0af68; font-family: monospace; word-break: break-all;">🔓 ${rawFileUrl}</span>
+                            </div>`;
+                            fileHuntingBox.scrollTop = fileHuntingBox.scrollHeight;
+                            
+                            fileSummaryText.innerHTML = `Total open files discovered: <strong style="color: #f7768e; background: rgba(247,118,142,0.15); padding: 2px 6px; border-radius: 4px;">${discoveredFilesCount} open files found!</strong>`;
+                        }
+                        
+                        // LIVE PARSING INTERCEPTORS FOR OTHER OWASP RISK CHIPS
+                        if (line.includes("Loophole found") || line.includes("Missing HTTPS") || line.includes("X-Frame-Options")) {
+                            bLinkVuln.className = "vector-badge status-triggered";
+                            bLinkVuln.innerText = "Triggered";
+                        } else if (bLinkVuln.innerText === "Idle" && line.includes("deep recursive link analysis")) {
+                            bLinkVuln.className = "vector-badge status-active";
+                            bLinkVuln.innerText = "Active";
+                        }
+
+                        if (line.includes("Cookie Found")) {
+                            bCookie.className = "vector-badge status-active";
+                            bCookie.innerText = "Collected";
+                        }
+
+                        if (line.includes("Server Header detected") || line.includes("jQuery Version found")) {
+                            bTech.className = "vector-badge status-active";
+                            bTech.innerText = "Identified";
+                        }
+
+                        let formattedLine = "";
+                        if (line.includes("Login successfully")) {
+                            formattedLine = `<span class="line-safe" style="font-weight: bold;">${line}</span>`;
+                        } else if (line.includes("Unsuccessful login")) {
+                            formattedLine = `<span class="line-vuln" style="font-weight: bold;">${line}</span>`;
+                        } else if (line.startsWith("INFO:")) {
+                            formattedLine = `<span class="line-info">${line}</span>`;
+                        } else if (line.startsWith("PORT:")) {
+                            formattedLine = `<span class="line-port">${line}</span>`;
+                        } else if (line.startsWith("CRAWL:")) {
+                            formattedLine = `<span class="line-crawl">${line}</span>`;
+                        } else if (line.startsWith("VULN:")) {
+                            formattedLine = `<span class="line-vuln">${line}</span>`;
+                        } else if (line.startsWith("SAFE:")) {
+                            formattedLine = `<span class="line-safe">${line}</span>`;
+                        } else {
+                            formattedLine = `<span>${line}</span>`;
+                        }
+                        
+                        consoleBox.innerHTML += formattedLine + "\n";
+                        consoleBox.scrollTop = consoleBox.scrollHeight;
+
+                        if (line.startsWith("VULN:")) {
+                            let cleanMsg = line.replace("VULN:", "").trim();
+                            let parts = cleanMsg.split("->");
+                            let description = parts[0] ? parts[0].trim() : "Security Loophole Detected";
+                            let targetLocation = parts[1] ? parts[1].trim() : urlInput;
+
+                            let row = `<tr>
+                                <td><span style="color: #f7768e; font-weight: bold;">[VULNERABILITY]</span></td>
+                                <td style="font-family: monospace; color: #e9ecef; font-size: 0.85rem;">${targetLocation}</td>
+                                <td style="color: #adb5bd;">${description}</td>
+                            </tr>`;
+                            tableBody.innerHTML += row;
+                        } 
+                        // RESTORED PORT DETECTOR MATRIX (CAPTURES BOTH OPEN AND CLOSED NETWORK INTERFACES)
+                        else if (line.startsWith("PORT:")) {
+                            let cleanPort = line.replace("PORT:", "").trim();
+                            let statusType = cleanPort.toLowerCase().includes("open") ? "OPEN" : "CLOSED";
+                            let badgeColor = statusType === "OPEN" ? "#e0af68" : "#8892b0";
+                            
+                            let row = `<tr>
+                                <td><span style="color: ${badgeColor}; font-weight: bold;">[PORT ${statusType}]</span></td>
+                                <td style="font-family: monospace; color: #e9ecef; font-size: 0.85rem;">Host Network Interface</td>
+                                <td style="color: #adb5bd;">${cleanPort}</td>
+                            </tr>`;
+                            tableBody.innerHTML += row;
+                        }
+                        else if (line.startsWith("INFO:") && (line.includes("detected") || line.includes("found"))) {
+                            let cleanTech = line.replace("INFO:", "").trim();
+                            let row = `<tr>
+                                <td><span style="color: #7aa2f7; font-weight: bold;">[TECHNOLOGY]</span></td>
+                                <td style="font-family: monospace; color: #e9ecef; font-size: 0.85rem;">Server Fingerprint</td>
+                                <td style="color: #adb5bd;">${cleanTech}</td>
+                            </tr>`;
+                            tableBody.innerHTML += row;
+                        }
+                    });
+                }
+                
+                if (tableBody.innerHTML.trim() === "") {
+                    tableBody.innerHTML = `<tr><td colspan="3" style="color: #9ece6a; text-align: center; padding: 1rem;">Scan finished cleanly. No vulnerabilities or exposed components captured.</td></tr>`;
+                }
+                
+                if (totalCrawledCount === 0) {
+                    crawlLinksBox.innerHTML = "<span style='color: #9ece6a;'>Operation completed. No inbound or outbound endpoint URLs were located.</span>";
+                    bCrawler.className = "vector-badge status-pass";
+                    bCrawler.innerText = "Secure";
+                } else if (bCrawler.innerText === "Active") {
+                    bCrawler.className = "vector-badge status-pass";
+                    bCrawler.innerText = "Finished";
+                }
+
+                if (discoveredFilesCount === 0) {
+                    fileHuntingBox.innerHTML = "<span style='color: #6c757d;'>No open historical backup or directory files exposed.</span>";
+                    bFileMatrix.className = "vector-badge status-pass";
+                    bFileMatrix.innerText = "Secure";
+                }
+
+                if (bLinkVuln.innerText === "Active") {
+                    bLinkVuln.className = "vector-badge status-pass";
+                    bLinkVuln.innerText = "Secure";
+                }
+
+                statusIndicator.innerHTML = "COMPLETED";
+                statusIndicator.style.color = "#9ece6a";
+                
+            } catch (err) {
+                consoleBox.innerHTML += `\n<span class="line-vuln">[FATAL EXECUTION DISRUPTION]: Stream closed unexpectedly: ${err.message}</span>`;
+                statusIndicator.innerHTML = "HALTED";
+                statusIndicator.style.color = "#f7768e";
+            }
+        }
+    </script>
+</body>
+</html>

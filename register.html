@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Configure New User Node</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1d20; color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #24282c; border: 1px solid #343a40; border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        h2 { margin: 0 0 1.5rem 0; font-size: 1.5rem; text-align: center; color: #ffffff; }
+        label { font-size: 0.85rem; color: #a0aec0; }
+        input { width: 100%; padding: 0.75rem; background: #1a1d20; border: 1px solid #495057; border-radius: 6px; color: #fff; margin: 0.4rem 0 1.2rem 0; box-sizing: border-box; }
+        button { width: 100%; padding: 0.8rem; background: #198754; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        button:hover { background: #157347; }
+        .info-banner { background: rgba(25, 135, 84, 0.1); border: 1px solid #198754; color: #75b798; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1.2rem; text-align: center; }
+        p { text-align: center; font-size: 0.85rem; color: #a0aec0; margin-top: 1.5rem; }
+        a { color: #0d6efd; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Register User </h2>
+        {% if msg %}<div class="info-banner">{{ msg }}</div>{% endif %}
+        <form method="POST">
+            <label>Set Username</label>
+            <input type="text" name="username" required autocomplete="off">
+            <label>Set Secure Password</label>
+            <input type="password" name="password" required>
+            <button type="submit">Deploy Workspace</button>
+        </form>
+        <p>Already configured? <a href="/login">Return to login</a></p>
+    </div>
+</body>
+</html>
